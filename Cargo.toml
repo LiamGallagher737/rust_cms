@@ -3,8 +3,16 @@ name = "rust_cms"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = [
+    "rust_cms_derive_macros",
+    "examples/*",
+]
+
 [dependencies]
-bevy_reflect = "0.9.0"
 rocket = "0.5.0-rc.2"
 rocket_auth = "0.4.0"
 rocket_dyn_templates = { version = "0.1.0-rc.2", features = ["tera"] }
+rust_cms_derive_macros = { path = "rust_cms_derive_macros" }
+serde = { version = "1.0.147", features = ["derive"] }
+bincode = "1.3"

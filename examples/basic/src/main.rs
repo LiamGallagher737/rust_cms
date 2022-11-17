@@ -1,31 +1,51 @@
-#[macro_use] extern crate rocket;
-use rust_cms::*;
-use rust_cms::bevy_reflect::prelude::*;
+#[macro_use]
+extern crate rocket;
+use rust_cms::prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[launch]
 fn rocket() -> _ {
-    rust_cms::RustCMS::new()
-        .register::<Person>(true)
-        .register::<House>(true)
-        .register::<Gender>(false)
-        .build()
+
+    let person = Person {
+        name: "Jack".into(),
+        age: 17,
+        dob: Date { day: 4, month: 3, year: 1998 },
+        house: House { floors: 1 },
+    };
+    let bin: Vec<u8> = bincode::serialize(&person).unwrap();
+    dbg!(bin.clone());
+
+    let p: Person = bincode::deserialize(&bin[..]).unwrap();
+
+    dbg!(p);
+
+    RustCMS::new().register_document::<Person>().build()
 }
 
-#[derive(Reflect)]
+#[derive(Schema, Clone, Serialize, Deserialize, Debug)]
 pub struct Person {
     name: String,
-    age: usize,
+    age: u32,
+    dob: Date,
+    // gender: Gender,
     house: House,
-    gender: Gender,
 }
 
-#[derive(Reflect)]
+#[derive(Schema, Clone, Serialize, Deserialize, Debug)]
+pub struct Date {
+    pub day: u32,
+    pub month: u32,
+    pub year: i32,
+}
+
+#[derive(Schema, Clone, Serialize, Deserialize, Debug)]
 pub struct House {
-    floors: u8,
+    floors: u32,
 }
 
-#[derive(Reflect)]
+// #[derive()]
 pub enum Gender {
     Male,
     Female,
+    Other,
 }
