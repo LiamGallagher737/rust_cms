@@ -1,5 +1,0 @@
-{% extends "base" %}
-
-{% block body %}
-Login
-{% endblock body %}

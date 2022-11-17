@@ -2,81 +2,45 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{self, DataStruct};
+use syn::{self, DataEnum, DataStruct};
 
-#[proc_macro_derive(Schema)]
-pub fn schema_macro_derive(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(Model)]
+pub fn model_macro_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse(input).unwrap();
-    impl_schema_macro(&ast)
+    impl_model_macro(&ast)
 }
 
-fn impl_schema_macro(ast: &syn::DeriveInput) -> TokenStream {
+fn impl_model_macro(ast: &syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
 
-    let get_schema_data = match &ast.data {
-        syn::Data::Struct(struct_info) => {
-            let info = gen_struct_info(struct_info, name.to_string());
-            quote! {
-                #info
-            }
-        }
-        syn::Data::Enum(enum_info) => {
-            let _varients = enum_info
-                .variants
-                .iter()
-                .map(|variant| variant.ident.to_string());
-            todo!()
-        }
-        syn::Data::Union(_) => panic!("Union not surported as schema"),
+    let type_name = match &ast.data {
+        syn::Data::Struct(_) => quote! { Struct },
+        syn::Data::Enum(_) => quote! { Enum },
+        syn::Data::Union(_) => panic!("Unions not surported"),
     };
 
-    let create = match &ast.data {
-        syn::Data::Struct(struct_info) => {
-            let fields = struct_info
-                .fields
-                .iter()
-                .map(|field| field.ident.clone().unwrap());
-            let values = struct_info
-                .fields
-                .iter()
-                .enumerate()
-                .map(|(i, field)| match &field.ty {
-                    syn::Type::Path(e) => {
-                        let t = e.path.get_ident().unwrap();
-                        quote! {
-                            input[#i].downcast_ref::<#t>().unwrap().to_owned()
-                        }
-                    }
-                    _ => panic!(),
-                });
-            quote! {
-                Self {
-                    #(#fields: #values,)*
-                }
-            }
-        }
-        syn::Data::Enum(_) => {
-            todo!()
-        }
-        syn::Data::Union(_) => panic!("Union not surported as schema"),
+    let rcms_info = match &ast.data {
+        syn::Data::Struct(e) => struct_rcms_info(e, &name.to_string()),
+        syn::Data::Enum(e) => enum_rcms_info(e, &name.to_string()),
+        syn::Data::Union(_) => panic!("Unions not surported"),
     };
 
     let gen = quote! {
-        impl rust_cms::schema::Schema for #name {
-            fn get_schema_data() -> rust_cms::schema::StructData {
-                #get_schema_data
+        impl rust_cms::model::Model for #name {
+            fn get_name() -> &'static str {
+                stringify!(#name)
             }
-            fn create(input: Vec<std::boxed::Box<dyn std::any::Any>>) -> Self {
-                #create
+            fn get_rcms_info() -> rust_cms::model::RcmsInfo {
+                rust_cms::model::RcmsInfo::#type_name {
+                    #rcms_info
+                }
             }
         }
-        // impl rust_cms::Serialize for #name {}
-        // impl rust_cms::Deserialize for #name {}
     };
     gen.into()
 }
 
-fn gen_struct_info(data: &DataStruct, name: String) -> quote::__private::TokenStream {
+fn struct_rcms_info(data: &DataStruct, name: &str) -> quote::__private::TokenStream {
     let fields = data.fields.iter().map(|field| {
         let type_info = match &field.ty {
             syn::Type::Path(e) => e,
@@ -91,34 +55,50 @@ fn gen_struct_info(data: &DataStruct, name: String) -> quote::__private::TokenSt
             .to_string()
             .as_str()
         {
-            "String" => quote! { rust_cms::schema::FieldData::String },
-            "char" => quote! { rust_cms::schema::FieldData::Char },
-            "bool" => quote! { rust_cms::schema::FieldData::Boolean },
-            "i32" => quote! { rust_cms::schema::FieldData::I32 },
-            "u32" => quote! { rust_cms::schema::FieldData::U32 },
-            "f32" => quote! { rust_cms::schema::FieldData::F32 },
+            "String" => quote! { rust_cms::model::FieldType::String },
+            "char" => quote! { rust_cms::model::FieldType::Char },
+            "bool" => quote! { rust_cms::model::FieldType::Boolean },
+            "i32" => quote! { rust_cms::model::FieldType::I32 },
+            "u32" => quote! { rust_cms::model::FieldType::U32 },
+            "f32" => quote! { rust_cms::model::FieldType::F32 },
             _ => {
                 let n = type_info.path.get_ident().unwrap();
                 quote! {
-                    rust_cms::schema::FieldData::Struct(#n::get_schema_data())
+                    rust_cms::model::FieldType::Custom(#n::get_rcms_info())
                 }
             }
         };
 
         quote! {
-            rust_cms::schema::Field {
+            rust_cms::model::Field {
                 name: #field_name,
-                data: #field_type,
+                value: #field_type,
             }
         }
     });
+    let gen = quote! {
+        name: stringify!(#name),
+        fields: std::vec![
+            #(#fields,)*
+        ],
+    };
+    gen.into()
+}
 
-    quote! {
-        rust_cms::schema::StructData {
-            name: #name,
-            fields: std::vec![
-                #(#fields,)*
-            ],
+fn enum_rcms_info(data: &DataEnum, name: &str) -> quote::__private::TokenStream {
+    let varients = data.variants.iter().map(|varient| {
+        let vname = &varient.ident.to_string();
+        quote! {
+            rust_cms::model::Varient {
+                name: #vname,
+            }
         }
-    }
+    });
+    let gen = quote! {
+        name: stringify!(#name),
+        varients: std::vec![
+            #(#varients,)*
+        ],
+    };
+    gen.into()
 }

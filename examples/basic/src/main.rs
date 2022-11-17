@@ -2,48 +2,36 @@
 extern crate rocket;
 use rust_cms::prelude::*;
 use serde::{Deserialize, Serialize};
+use rust_cms::documents;
+use rust_cms::RustCmsDocumentsCollection;
 
 #[launch]
 fn rocket() -> _ {
+    println!("{:#?}", Person::get_rcms_info());
 
-    let person = Person {
-        name: "Jack".into(),
-        age: 17,
-        dob: Date { day: 4, month: 3, year: 1998 },
-        house: House { floors: 1 },
-    };
-    let bin: Vec<u8> = bincode::serialize(&person).unwrap();
-    dbg!(bin.clone());
+    let input = RustCmsDocuments::create();
 
-    let p: Person = bincode::deserialize(&bin[..]).unwrap();
-
-    dbg!(p);
-
-    RustCMS::new().register_document::<Person>().build()
+    RustCMS::new().build()
 }
 
-#[derive(Schema, Clone, Serialize, Deserialize, Debug)]
+documents!(Person, Date, Gender);
+
+#[derive(Model, Serialize, Deserialize, Debug)]
 pub struct Person {
     name: String,
     age: u32,
     dob: Date,
-    // gender: Gender,
-    house: House,
+    gender: Gender,
 }
 
-#[derive(Schema, Clone, Serialize, Deserialize, Debug)]
+#[derive(Model, Serialize, Deserialize, Debug)]
 pub struct Date {
     pub day: u32,
     pub month: u32,
     pub year: i32,
 }
 
-#[derive(Schema, Clone, Serialize, Deserialize, Debug)]
-pub struct House {
-    floors: u32,
-}
-
-// #[derive()]
+#[derive(Model, Serialize, Deserialize, Debug)]
 pub enum Gender {
     Male,
     Female,
