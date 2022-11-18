@@ -7,11 +7,13 @@ use rust_cms::RustCmsDocumentsCollection;
 
 #[launch]
 fn rocket() -> _ {
-    println!("{:#?}", Person::get_rcms_info());
+    match "Test".to_lowercase() {
+        "Test".to_lowercase() => {
 
+        },
+    }
     let input = RustCmsDocuments::create();
-
-    RustCMS::new().build()
+    RustCMS::new(input).build()
 }
 
 documents!(Person, Date, Gender);

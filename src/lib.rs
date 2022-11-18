@@ -10,30 +10,29 @@ mod api;
 mod db;
 pub mod model;
 
-type Doctypes = HashMap<&'static str, model::RcmsInfo>;
 pub struct RustCMS {
-    doctypes: Doctypes,
+    // doctypes: HashMap<&'static str, Box<dyn model::Model>>,
 }
 
 impl Default for RustCMS {
     fn default() -> Self {
         Self {
-            doctypes: HashMap::new(),
+            // doctypes: HashMap::new(),
         }
     }
 }
 
 impl RustCMS {
-    pub fn new<T: RustCmsDocumentsCollection>(docs: T) -> Self {
+    pub fn new(docs: HashMap<String, Box<impl model::Model>>) -> Self {
         Self {
-            doctypes: HashMap::new(),
+            // doctypes: HashMap::from([
+            //     ("key", "value")
+            // ]),
         }
     }
     pub fn build(self) -> Rocket<Build> {
-        println!("Document Types:\n{:#?}", self.doctypes);
-
         rocket::build()
-            .manage(self.doctypes)
+            // .manage(self.doctypes)
             .mount("/api", routes![api::get_document, api::post_document])
     }
 }
@@ -60,10 +59,21 @@ macro_rules! documents {
                     $((stringify!($t).to_lowercase(), Box::new(RustCmsDocuments::$t { serialize: $t::get_serialize_fn(), deserialize: $t::get_deserialize_fn() }))),+
                 ])
             }
+            fn from_str(&self, input: &str) -> Self {
+                match input.to_lowercase() {
+                    $(stringify!($t).to_lowercase() => Self::$t { serialize: Box::new(|item| { bincode::serialize::<$t>(&item) }), deserialize: |bin| { bincode::deserialize(bin) as $t } }),+
+                }
+            }
+            // fn serialize(self, item: impl model::Model, ) -> Vec<u8> {
+            //     self::
+            // }
         }
     };
 }
 
 pub trait RustCmsDocumentsCollection {
     fn create() -> HashMap<String, Box<Self>>;
+    fn from_str(&self, input: &str) -> Self;
+    // fn serialize(self, item: impl model::Model) -> Vec<u8>;
+    // fn deserialize(bin: Vec<u8>) -> Box<dyn model::Model>;
 }

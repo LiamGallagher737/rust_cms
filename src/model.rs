@@ -1,16 +1,13 @@
 use bincode::ErrorKind;
-
 use rocket::serde::DeserializeOwned;
-
 use serde::Serialize;
 
+// pub(crate) struct ModelSerdeInfo {
+//     pub(crate) serialize: Box<dyn Fn(Box<dyn Model>) -> Vec<u8>>,
+//     pub(crate) deserialize: Box<dyn Fn(Vec<u8>) -> Box<dyn Model>>,
+// }
+
 pub trait Model: Serialize + DeserializeOwned {
-    // fn serialize_bin(&self) -> Result<Vec<u8>, Box<ErrorKind>> {
-    //     bincode::serialize(self)
-    // }
-    // fn deserialize_bin(bin: Vec<u8>) -> Result<Self, Box<ErrorKind>> {
-    //     bincode::deserialize(&bin[..])
-    // }
     fn get_serialize_fn() -> Box<dyn Fn(Self) -> Vec<u8>> {
         Box::new(|item| bincode::serialize(&item).unwrap())
     }
