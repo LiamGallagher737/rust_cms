@@ -14,24 +14,21 @@ fn rocket() -> _ {
 
 documents!(Person, Restaurant);
 
-#[derive(Model, Serialize, Deserialize, Debug)]
-pub struct Person {
-    name: String,
-    age: u32,
-    gender: Gender,
-}
-
-#[derive(Model, Serialize, Deserialize, Debug)]
-pub enum Gender {
-    Male,
-    Female,
-    Other,
-}
-
-#[derive(Model, Serialize, Deserialize, Debug)]
-pub struct Restaurant {
-    name: String,
-    rating: u32,
+models! {
+    struct Person {
+        name: String,
+        age: u32,
+        gender: Gender,
+    },
+    enum Gender {
+        Male,
+        Female,
+        Other,
+    },
+    struct Restaurant {
+        name: String,
+        rating: u32,
+    },
 }
 ```
 This will result in the following endpoints

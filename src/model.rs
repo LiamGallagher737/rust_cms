@@ -1,4 +1,4 @@
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Serialize};
 
 /// A document or any struct / enum within a document must implement [`Model`]
 pub trait Model: Serialize + DeserializeOwned {
