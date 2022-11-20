@@ -77,12 +77,12 @@ fn struct_rcms_info(data: &DataStruct, name: &str) -> quote::__private::TokenStr
         }
     });
     let gen = quote! {
-        name: stringify!(#name),
+        name: #name,
         fields: std::vec![
             #(#fields,)*
         ],
     };
-    gen.into()
+    gen
 }
 
 fn enum_rcms_info(data: &DataEnum, name: &str) -> quote::__private::TokenStream {
@@ -95,10 +95,10 @@ fn enum_rcms_info(data: &DataEnum, name: &str) -> quote::__private::TokenStream 
         }
     });
     let gen = quote! {
-        name: stringify!(#name),
+        name: #name,
         varients: std::vec![
             #(#varients,)*
         ],
     };
-    gen.into()
+    gen
 }

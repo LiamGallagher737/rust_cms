@@ -1,5 +1,9 @@
-#[macro_use]
-extern crate rocket;
+# Rust CMS
+
+## Example
+
+```rust
+#[macro_use] extern crate rocket;
 use rust_cms::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -8,21 +12,13 @@ fn rocket() -> _ {
     rocket::build().mount("/api", routes![get_document, post_document])
 }
 
-documents!(Person, Date, Gender);
+documents!(Person, Restaurant);
 
 #[derive(Model, Serialize, Deserialize, Debug)]
 pub struct Person {
     name: String,
     age: u32,
-    dob: Date,
     gender: Gender,
-}
-
-#[derive(Model, Serialize, Deserialize, Debug)]
-pub struct Date {
-    pub day: u32,
-    pub month: u32,
-    pub year: i32,
 }
 
 #[derive(Model, Serialize, Deserialize, Debug)]
@@ -31,3 +27,19 @@ pub enum Gender {
     Female,
     Other,
 }
+
+#[derive(Model, Serialize, Deserialize, Debug)]
+pub struct Restaurant {
+    name: String,
+    rating: u32,
+}
+```
+This will result in the following endpoints
+
+### Get
+- `/api/document/person/<id>`
+- `/api/restaurant/person/<id>`
+
+### Post
+- `/api/document/person`
+- `/api/restaurant/person`

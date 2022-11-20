@@ -1,24 +1,15 @@
-use bincode::ErrorKind;
-use rocket::serde::DeserializeOwned;
-use serde::Serialize;
+use serde::{Serialize, de::DeserializeOwned};
 
-// pub(crate) struct ModelSerdeInfo {
-//     pub(crate) serialize: Box<dyn Fn(Box<dyn Model>) -> Vec<u8>>,
-//     pub(crate) deserialize: Box<dyn Fn(Vec<u8>) -> Box<dyn Model>>,
-// }
-
+/// A document or any struct / enum within a document must implement [`Model`]
 pub trait Model: Serialize + DeserializeOwned {
-    fn get_serialize_fn() -> Box<dyn Fn(Self) -> Vec<u8>> {
-        Box::new(|item| bincode::serialize(&item).unwrap())
-    }
-    fn get_deserialize_fn() -> Box<dyn Fn(Vec<u8>) -> Self> {
-        Box::new(|bin| bincode::deserialize(&bin[..]).unwrap())
-    }
+    /// Returns the name of the implementing struct or enum
     fn get_name() -> &'static str;
+    /// Returns the [`RcmsInfo`] used to display the struct / enum in the web interface
     fn get_rcms_info() -> RcmsInfo;
 }
 
-#[derive(Debug)]
+/// Stores infomation about a struct or enum used to display it on the web interface
+#[derive(Debug, PartialEq)]
 pub enum RcmsInfo {
     Struct {
         name: &'static str,
@@ -28,18 +19,16 @@ pub enum RcmsInfo {
         name: &'static str,
         varients: Vec<Varient>,
     },
-    // Union {
-    //     name: &'static str,
-    // },
 }
 
-#[derive(Debug)]
+/// Infomation about a struct field
+#[derive(Debug, PartialEq)]
 pub struct Field {
     pub name: &'static str,
     pub value: FieldType,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum FieldType {
     String,
     Char,
@@ -50,7 +39,9 @@ pub enum FieldType {
     Custom(RcmsInfo),
 }
 
-#[derive(Debug)]
+/// Infomation about an enums varient
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Debug, PartialEq)]
 pub struct Varient {
     pub name: &'static str,
     // add ability for enums to hold data

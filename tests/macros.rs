@@ -1,81 +1,95 @@
-#![allow(dead_code)]
+use rust_cms::{
+    model::{FieldType, RcmsInfo},
+    prelude::*,
+};
+use serde::{Deserialize, Serialize};
 
-use std::any::Any;
-
-use rust_cms::{FieldData, Schema};
-use rust_cms_derive_macros::Schema;
-
-#[derive(Schema, Clone, Debug, PartialEq)]
+#[derive(Model, Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct Person {
     name: String,
     age: u32,
     dob: Date,
+    gender: Gender,
 }
 
-#[derive(Schema, Clone, Debug, PartialEq)]
+#[derive(Model, Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct Date {
     pub day: u32,
     pub month: u32,
     pub year: i32,
 }
 
-#[test]
-fn test_get_schema_data() {
-    let data = Person::get_schema_data();
-
-    assert_eq!(data.name, "Person");
-
-    assert_eq!(data.fields[0].name, "name");
-    assert_eq!(data.fields[0].data, FieldData::String);
-
-    assert_eq!(data.fields[1].name, "age");
-    assert_eq!(data.fields[1].data, FieldData::U32);
-
-    assert_eq!(data.fields[2].name, "dob");
-    if let FieldData::Struct(dob) = &data.fields[2].data {
-        assert_eq!(dob.name, "Date");
-
-        assert_eq!(dob.fields[0].name, "day");
-        assert_eq!(dob.fields[0].data, FieldData::U32);
-
-        assert_eq!(dob.fields[1].name, "month");
-        assert_eq!(dob.fields[1].data, FieldData::U32);
-
-        assert_eq!(dob.fields[2].name, "year");
-        assert_eq!(dob.fields[2].data, FieldData::I32);
-    } else {
-        panic!(
-            "Field 'dob' should be struct but is '{:?}'",
-            data.fields[2].data
-        );
-    }
+#[derive(Model, Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum Gender {
+    Male,
+    Female,
+    Other,
 }
 
 #[test]
-fn test_create() {
-    let params: Vec<Box<dyn Any>> = vec![Box::new(20_u32), Box::new(2_u32), Box::new(2022_i32)];
-    let date = Date::create(params);
-    assert_eq!(
-        date.clone(),
-        Date {
-            day: 20,
-            month: 2,
-            year: 2022
-        }
-    );
+fn get_name() {
+    let name = Person::get_name();
+    assert_eq!("Person", name);
+}
 
-    let params: Vec<Box<dyn Any>> = vec![
-        Box::new("Bob".to_string()),
-        Box::new(70_u32),
-        Box::new(date.clone()),
-    ];
-    let person = Person::create(params);
-    assert_eq!(
-        person,
-        Person {
-            name: "Bob".to_string(),
-            age: 70,
-            dob: date
+#[test]
+fn get_rcms_info() {
+    let info = Person::get_rcms_info();
+    match info {
+        RcmsInfo::Enum {
+            name: _,
+            varients: _,
+        } => panic!("Person rcms info varient is Enum, should be Struct"),
+        RcmsInfo::Struct { name, fields } => {
+            assert_eq!("Person", name);
+
+            assert_eq!("name", fields[0].name);
+            assert_eq!(FieldType::String, fields[0].value);
+
+            assert_eq!("age", fields[1].name);
+            assert_eq!(FieldType::U32, fields[1].value);
+
+            assert_eq!("dob", fields[2].name);
+            if let FieldType::Custom(info) = &fields[2].value {
+                match info {
+                    RcmsInfo::Enum {
+                        name: _,
+                        varients: _,
+                    } => panic!("Date rcms info varient is Enum, should be Struct"),
+                    RcmsInfo::Struct { name, fields } => {
+                        assert_eq!("Date", *name);
+
+                        assert_eq!("day", fields[0].name);
+                        assert_eq!(FieldType::U32, fields[0].value);
+
+                        assert_eq!("month", fields[1].name);
+                        assert_eq!(FieldType::U32, fields[1].value);
+
+                        assert_eq!("year", fields[2].name);
+                        assert_eq!(FieldType::I32, fields[2].value);
+                    }
+                }
+            }
+
+            assert_eq!("gender", fields[3].name);
+            if let FieldType::Custom(info) = &fields[3].value {
+                match info {
+                    RcmsInfo::Struct { name: _, fields: _ } => {
+                        panic!("Gender rcms varient is Struct, should be Enum")
+                    }
+                    RcmsInfo::Enum { name, varients } => {
+                        assert_eq!("Gender", *name);
+                        assert_eq!("Male", varients[0].name);
+                        assert_eq!("Female", varients[1].name);
+                        assert_eq!("Other", varients[2].name);
+                    }
+                }
+            } else {
+                panic!(
+                    "Field 'dob' should be type FieldType::Custom but is '{:?}'",
+                    fields[2].value
+                );
+            }
         }
-    );
+    };
 }
