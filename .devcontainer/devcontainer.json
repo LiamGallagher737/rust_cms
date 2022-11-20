@@ -1,0 +1,8 @@
+{
+	"name": "Codespaces Rust Starter",
+	"extensions": [
+		"matklad.rust-analyzer",
+		"serayuzgur.crates",
+		"vadimcn.vscode-lldb"
+	]
+}
