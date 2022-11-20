@@ -4,5 +4,6 @@
 		"matklad.rust-analyzer",
 		"serayuzgur.crates",
 		"vadimcn.vscode-lldb"
-	]
+	],
+	"dockerFile": "Dockerfile"
 }
