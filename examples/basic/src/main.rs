@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 
 #[launch]
 fn rocket() -> _ {
-    println!("{:#?}", Person::get_rcms_info());
     rocket::build().mount("/api", routes![get_document, post_document])
 }
 

@@ -98,34 +98,45 @@ macro_rules! documents {
 
         #[get("/document/<doctype>/<id>", format = "application/octet-stream")]
         pub fn get_document(doctype: String, id: usize) -> Result<Vec<u8>, rust_cms::__reexports::Status> {
-            let item: std::boxed::Box<dyn std::any::Any> = std::boxed::Box::new(12_u32);
-            let bin : Vec<u8> = match doctype.to_lowercase().as_str() {
-                $( rust_cms::__reexports::casey::lower!(stringify!($t)) => {
-                    match rust_cms::__reexports::bincode::serialize(item.downcast_ref::<$t>().unwrap()) {
-                        Ok(e) => e,
-                        Err(_) => return Err(rust_cms::__reexports::Status::BadRequest),
-                    }
-                } ),+,
-                _ => return Err(rust_cms::__reexports::Status::NotFound)
-            };
-            Ok(bin)
+            let path = format!("{}/db/document/{doctype}/{id}.bin", std::env::current_dir().unwrap().display());
+            match std::fs::read(path) {
+                Ok(e) => Ok(e),
+                Err(_) => Err(rust_cms::__reexports::Status::InternalServerError),
+            }
         }
 
         #[post("/document/<doctype>", format = "application/octet-stream", data = "<doc>")]
         pub async fn post_document(doctype: String, mut doc: rust_cms::__reexports::Data<'_>) -> Result<String, rust_cms::__reexports::Status> {
             let bytes = doc.peek(512).await;
-            println!("{:#?}", bytes);
+
+            // Check if successfully deserialize to document before adding it to database
             match doctype.to_lowercase().as_str() {
                 $( rust_cms::__reexports::casey::lower!(stringify!($t))  => {
                     let document = match rust_cms::__reexports::bincode::deserialize::<$t>(bytes) {
-                        Ok(e) => e,
+                        Ok(_) => {},
                         Err(_) => return Err(rust_cms::__reexports::Status::BadRequest),
                     };
-                    return Ok(format!("{:#?}", document));
                 } ),+,
                 _ => return Err(rust_cms::__reexports::Status::NotFound)
             };
+
+            let id = 0;
+
+            let path = format!("{}/db/document/{doctype}/", std::env::current_dir().unwrap().display());
+            std::fs::create_dir_all(path.clone());
+            match std::fs::write(format!("{path}/{id}.bin"), bytes) {
+                Ok(_) => Ok(id.to_string()),
+                Err(_) => Err(rust_cms::__reexports::Status::InternalServerError),
+            }
         }
+
+        // fn get_current_working_dir() -> String {
+        //     let res = std::env::current_dir();
+        //     match res {
+        //         Ok(path) => path.into_os_string().into_string().unwrap(),
+        //         Err(_) => "FAILED".to_string()
+        //     }
+        // }
 
     };
 }
