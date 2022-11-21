@@ -1,7 +1,11 @@
 #[macro_use]
 extern crate rocket;
-use rust_cms::prelude::*;
+#[macro_use]
+extern crate rust_cms;
+use rust_cms::model::Model;
 use serde::{Deserialize, Serialize};
+
+#[cfg(test)] mod tests;
 
 #[launch]
 fn rocket() -> _ {

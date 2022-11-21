@@ -1,7 +1,6 @@
-use rust_cms::{
-    model::{FieldType, RcmsInfo},
-    prelude::*,
-};
+#[macro_use]
+extern crate rust_cms;
+use rust_cms::model::{FieldType, Model, RcmsInfo};
 use serde::{Deserialize, Serialize};
 
 models! {

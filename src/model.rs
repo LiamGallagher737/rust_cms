@@ -39,7 +39,7 @@ pub enum FieldType {
     Custom(RcmsInfo),
 }
 
-/// Infomation about an enums varient
+/// Infomation about an enum varient
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Debug, PartialEq)]
 pub struct Varient {
