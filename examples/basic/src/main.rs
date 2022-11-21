@@ -2,10 +2,10 @@
 extern crate rocket;
 #[macro_use]
 extern crate rust_cms;
-use rust_cms::model::Model;
 use serde::{Deserialize, Serialize};
 
-#[cfg(test)] mod tests;
+#[cfg(test)]
+mod tests;
 
 #[launch]
 fn rocket() -> _ {

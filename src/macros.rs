@@ -59,7 +59,11 @@ macro_rules! documents {
             let id = 0;
 
             let path = format!("{}/db/document/{doctype}/", std::env::current_dir().unwrap().display());
-            std::fs::create_dir_all(path.clone());
+
+            if let Err(_) = std::fs::create_dir_all(path.clone()) {
+                return Err(rust_cms::__reexports::Status::InternalServerError);
+            }
+
             match std::fs::write(format!("{path}/{id}.bin"), bytes) {
                 Ok(_) => Ok(id.to_string()),
                 Err(_) => Err(rust_cms::__reexports::Status::InternalServerError),
